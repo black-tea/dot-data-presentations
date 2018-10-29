@@ -1,0 +1,100 @@
+LADOT Data Analysis with APIs
+========================================================
+author: Tim Black
+date: 10/25/18
+autosize: true
+
+What is an API?
+========================================================
+
+API = "Application Programming Interface"  
+An  API allows one program to interact (eg. request data) from another  
+
+An API is an interaction between 2 actors
+- Client: the computer that sends the request to the sever
+- Server: the computer that responds to the request
+  
+MDS Example
+- Client: LADOT Computer, 3rd Party (eg Remix)
+- Server: Provider (eg. Lime)
+
+Structure of an API Request
+========================================================
+
+Parts of a Request & MDS Example
+- Endpoint (the API url)
+  - https://lime.bike/api/partners/v1/gbfs/los_angeles/free_bike_status
+- Action (GET, POST, PUT, DELETE)
+  - GET (we want info!)
+- Body (information related)
+  - Empty
+- Authentication (if needed)
+- Header information (metadata)
+
+Making a Request
+========================================================
+  
+### Method of Request (HTTP)
+- Make a URL request in a browser for the information (HTTP already), or Use a program that requests that information and translates it into usable HTTP form (here, in R)
+
+### In a browser
+- Make a URL request in a browser (cannot require authentication)
+- <https://lime.bike/api/partners/v1/gbfs/los_angeles/free_bike_status>
+
+### In R, using `httr` package
+```{r}
+library(httr)
+# Call's Lime API
+url <- 'https://lime.bike/api/partners/v1/gbfs/los_angeles/free_bike_status'
+getResult <- GET(url, verbose())
+```
+
+Process the Result of the Request
+========================================================
+
+```{r, eval=FALSE}
+library(jsonlite)
+library(dplyr)
+library(leaflet)
+# Format the data
+contentText <- content(getResult, as = 'text')
+contentJSON <- fromJSON(contentText, flatten = TRUE)
+contentdf <- as.data.frame(contentJSON$data)
+contentdf <- contentdf %>%
+  mutate(lng = as.numeric(bikes.lon)) %>%
+  mutate(lat = as.numeric(bikes.lat))
+
+# Map Lime Data
+map <- leaflet() %>% addTiles() %>% addMarkers(data=contentdf)
+map
+```
+
+Display the Results
+========================================================
+
+```{r, echo=FALSE}
+library(jsonlite)
+library(dplyr)
+library(leaflet)
+# Format the data
+contentText <- content(getResult, as = 'text')
+contentJSON <- fromJSON(contentText, flatten = TRUE)
+contentdf <- as.data.frame(contentJSON$data)
+contentdf <- contentdf %>%
+  mutate(lng = as.numeric(bikes.lon)) %>%
+  mutate(lat = as.numeric(bikes.lat))
+
+# Map Lime Data
+map <- leaflet() %>% addTiles() %>% addMarkers(data=contentdf)
+map
+```
+
+MDS
+========================================================
+MDS is a standard for how dockless companies need to provide APIs
+
+We are standardizing
+- What info they are providing
+- How they are providing it
+
+<https://github.com/CityOfLosAngeles/mobility-data-specification/tree/dev/provider>
